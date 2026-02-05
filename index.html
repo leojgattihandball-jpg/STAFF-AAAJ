@@ -3,67 +3,58 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AAAJ App</title>
-
-  <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#ffffff" />
-
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <title>AAAJ App</title>
   <style>
-    body{
-      margin:0; height:100vh; display:grid; place-items:center;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background:#fff; color:#111;
-    }
-    .card{ width:min(520px, 92vw); text-align:center; padding:28px; border:1px solid #eaeaea; border-radius:18px; }
-    img{ width:96px; height:96px; border-radius:20px; }
-    h1{ margin:14px 0 6px; font-size:22px; }
-    p{ margin:0 0 16px; color:#555; }
-    button{
-      width:100%; padding:14px 16px; border:0; border-radius:14px;
-      font-size:16px; cursor:pointer;
-    }
-    .primary{ background:#111; color:#fff; }
-    .ghost{ margin-top:10px; background:#f3f4f6; color:#111; }
-    .small{ margin-top:12px; font-size:12px; color:#777; word-break:break-all; }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#fff;color:#111}
+    .wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .card{max-width:420px;width:100%;border:1px solid #e5e7eb;border-radius:16px;padding:18px;box-shadow:0 8px 30px rgba(0,0,0,.06)}
+    .logo{width:84px;height:84px;border-radius:18px;display:grid;place-items:center;margin:0 auto 12px;border:1px solid #eee}
+    h1{font-size:20px;margin:0 0 8px;text-align:center}
+    p{margin:0 0 14px;text-align:center;color:#444}
+    button,a.btn{display:block;width:100%;text-align:center;padding:12px 14px;border-radius:12px;border:0;background:#111;color:#fff;font-weight:700;text-decoration:none}
+    .muted{font-size:12px;color:#666;margin-top:10px}
   </style>
 </head>
 <body>
-  <div class="card">
-    <img src="icon-192.png" alt="AAAJ" />
-    <h1>AAAJ App</h1>
-    <p>Abriendo la app…</p>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">AAAJ</div>
+      <h1>AAAJ App</h1>
+      <p>Para evitar el error de Google Drive, abrimos la app en el navegador.</p>
 
-    <button class="primary" id="openBtn">Abrir ahora</button>
-    <button class="ghost" id="copyBtn">Copiar link</button>
-
-    <div class="small" id="urlTxt"></div>
+      <a id="btn" class="btn" href="#">Abrir ahora</a>
+      <div class="muted" id="msg"></div>
+    </div>
   </div>
 
   <script>
-    // ⚠️ Pegá acá tu /exec real
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxBe-dNInY9v8B1sBc9j3u5VNiuvXIpW3eW0nxHXPQ1Nb0ri8r_l_0Kpa3IRRZ4shQe/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxBe-dNInY9v8B1sBc9j3u5VNiuvXIpW3eW0nxHXPQ1Nb0ri8r_l_0Kpa3IRRZ4shQe/exec";
 
+    const ua = navigator.userAgent || "";
+    const isAndroid = /Android/i.test(ua);
 
-    document.getElementById("urlTxt").textContent = GAS_URL;
+    // En Android: forzamos abrir en Chrome externo (evita WebView que dispara el error Drive)
+    const chromeIntent = isAndroid
+      ? "intent://" + GAS_URL.replace(/^https?:\/\//, "") +
+        "#Intent;scheme=https;package=com.android.chrome;end"
+      : GAS_URL;
 
-    function openNow() {
-      // abre en la misma pestaña (más compatible en móviles)
-      window.location.href = GAS_URL;
-    }
+    const btn = document.getElementById("btn");
+    const msg = document.getElementById("msg");
 
-    document.getElementById("openBtn").addEventListener("click", openNow);
+    btn.onclick = (e) => {
+      e.preventDefault();
+      // abre afuera del contenedor
+      window.location.href = chromeIntent;
+    };
 
-    document.getElementById("copyBtn").addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(GAS_URL);
-        alert("Link copiado ✅");
-      } catch(e) {
-        prompt("Copiá el link:", GAS_URL);
-      }
-    });
-
-    // Auto-intento (si el móvil no deja, igual queda el botón)
-    setTimeout(openNow, 800);
+    // Auto-intento a los 600ms (si falla, el botón queda)
+    setTimeout(() => {
+      msg.textContent = "Abriendo…";
+      window.location.href = chromeIntent;
+    }, 600);
   </script>
 </body>
 </html>
